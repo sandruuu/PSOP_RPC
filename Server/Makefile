@@ -4,7 +4,7 @@ all: main clean_obj
 main : FunctionLib
 	$(CC) $@.c -o $@ -l$< -L .
 
-FunctionLib : add.o connectToClient.o ../Utils/packet.o server_stub.o epollConnection.o asincCall.o
+FunctionLib : functions.o connectToClient.o ../Utils/packet.o server_stub.o epollConnection.o asincCall.o
 	$(CC) -shared $(CFLAGS) $^ -o lib$@.so
 
 ../Utils/packet.o: ../Utils/packet.c ../Utils/packet.h
