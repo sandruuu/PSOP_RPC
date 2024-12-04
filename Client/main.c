@@ -1,23 +1,35 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include "client_stub.h"
-
-#define PORT 8080
-#define IPADDRESS "25.19.213.168"
+#include "menu.h"
 
 int main(){
-    TCPConnection* connection = (TCPConnection*)malloc(sizeof(TCPConnection));
-    connection->endpoint = (IPEndpoint*)malloc(sizeof(IPEndpoint));
-    connection->endpoint->IPAddress = strdup("127.0.0.1");
-    connection->endpoint->Port = PORT;
-    connection->recvPacket = (Packet*)malloc(sizeof(Packet));
+
+    TCPConnection* connection;
+   
+    struct sigaction signalAcc;
+    sigemptyset(&signalAcc.sa_mask);
+    signalAcc.sa_handler = HandleSignal;
+    sigaction(SIGINT,&signalAcc,NULL);
+
+    initConnection(&connection);
+
+    //initilizeaza bariera care sincronizeaza stergerea cererilor cu gestionarea acetora 
+    initialize_barrier();
+
+    //creem threadurile care trimiterea de requesturi
+    create_thread((void *)connection);
+
+    //creem threadul care se ocupa de stergerea cererilor la care s-a primit raspuns
+    pthread_t cleanup_thread;
+    pthread_create(&cleanup_thread, NULL, clearQueueOfProcessedPackets, NULL);
+
+    //testarea trimiterii de cereri si primirea de raspunsuri in mod sincron si asincron 
+    test(connection);
+   
+    //asteptam terminarea executiei threadurilor
+    waitThreads();
+    pthread_join(cleanup_thread,NULL);
     
-    int sum = add(connection, 10, 20);
-    printf("Suma numerelor este: %d\n", sum);
+    CloseConnection(connection);
     
-    free(connection->endpoint->IPAddress);
-    free(connection->endpoint);
-    free(connection->recvPacket);
-    free(connection);
+
     return 0;
 }
