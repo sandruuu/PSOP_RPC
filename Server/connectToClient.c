@@ -1,37 +1,82 @@
 #include "connectToClient.h"
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+int activeThreads = 0;
 
-//pthread_mutex_t recv_mutex = PTHREAD_MUTEX_INITIALIZER;
+Queue requestsQueue;
+int requestQueue_size = 0;
+pthread_mutex_t requestsQueue_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-void createSocket(TCP_serverSocket *server)
+Queue processedQueue;
+int processedQueue_size = 0;
+pthread_mutex_t processedQueue_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+int generateID()
 {
-    server->sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (server->sockfd == -1)
+    static int id = 0;
+    id++;
+    return id;
+}
+
+int callAsyncFunction(Packet *packet)
+{
+    int id = generateID();
+    Clear(packet);
+    packet->packetType = ACK;
+    AppendInt(packet, id);
+    return id;
+}
+
+void callSumFunction(Packet *packet)
+{
+    uint32_t value_1;
+    uint32_t value_2;
+    ExtractInt(packet, &value_1);
+    ExtractInt(packet, &value_2);
+
+    int returnVal = add((int)value_1, (int)value_2);
+    printf("%d\n", returnVal);
+    Clear(packet);
+    AppendInt(packet, returnVal);
+}
+
+void callFunction(Packet *packet)
+{
+    char *data;
+    ExtractString(packet, &data);
+    if (strcmp(data, "add") == 0)
     {
-        perror("[createSocket(TCP_serverSocket *server)] - ");
+        callSumFunction(packet);
+    }
+    packet->packetType = ACK;
+}
+
+void createSocket(TCPServerConn* serverConn)
+{
+    serverConn->sockFD = socket(AF_INET, SOCK_STREAM, 0);
+    if (serverConn->sockFD == -1)
+    {
+        perror("[createSocket(TCPServerConn*)] - ");
         exit(EXIT_FAILURE);
     }
     else
     {
         printf("Socket successfully created..\n");
-        bzero(&server->serveraddr, sizeof(server->serveraddr));
+        bzero(&serverConn->serveraddr, sizeof(serverConn->serveraddr));
     }
 }
-
-void initSocket(TCP_serverSocket *server)
+void initSocket(TCPServerConn* serverConn)
 {
-    server->serveraddr.sin_family = AF_INET;
-    server->serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    server->serveraddr.sin_port = htons(PORT);
+    serverConn->serveraddr.sin_family = AF_INET;
+    serverConn->serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serverConn->serveraddr.sin_port = htons(PORT);
 }
-
-void Bind(TCP_serverSocket *server)
+void Bind(TCPServerConn* serverConn)
 {
-
-    if (bind(server->sockfd, (struct sockaddr *)&server->serveraddr,
-             sizeof(server->serveraddr)) != 0)
+    if (bind(serverConn->sockFD, (struct sockaddr *)&serverConn->serveraddr,
+             sizeof(serverConn->serveraddr)) != 0)
     {
-        perror("[Bind(TCP_serverSocket* server)] - ");
+        perror("[Bind(TCPServerConn*)] - ");
         exit(EXIT_FAILURE);
     }
     else
@@ -39,25 +84,19 @@ void Bind(TCP_serverSocket *server)
         printf("Socket successfully binded..\n");
     }
 }
-
-void closeClientConnection(int client_fd)
+void closeClientConnection(int sockFD)
 {
-    shutdown(client_fd,SHUT_RDWR);
-    close(client_fd);
-    printf("Connection closed for fd: %d\n", client_fd);
+    close(sockFD);
 }
-
-void closeServerConnection(int server_fd)
+void closeServerConnection(int sockFD)
 {
-    close(server_fd);
+    close(sockFD);
 }
-
-void Listen(TCP_serverSocket *server)
+void Listen(TCPServerConn* serverConn)
 {
-    //serverul poate accespta maxim 5 cereri, celelalte vor fi refuzate 
-    if (listen(server->sockfd, 5) != 0)
+    if (listen(serverConn->sockFD, 5) != 0)
     {
-        perror("[Listen(TCP_serverSocket* server)] - ");
+        perror("[Listen(TCPServerConn*)] - ");
         exit(EXIT_FAILURE);
     }
     else
@@ -65,15 +104,14 @@ void Listen(TCP_serverSocket *server)
         printf("Server listening...\n");
     }
 }
-
-void Accept(TCP_serverSocket *server, TCP_clientSocket *client)
+void Accept(TCPServerConn* serverConn, TCPClientConn* clientConn)
 {
-    client->len = sizeof(client->clientaddr);
-    client->connfd = accept(server->sockfd,
-                            (struct sockaddr *)&client->clientaddr, &(client->len));
-    if (client->connfd < 0)
+    clientConn->len = sizeof(clientConn->clientaddr);
+    clientConn->sockFD = accept(serverConn->sockFD,
+                            (struct sockaddr *)&clientConn->clientaddr, &(clientConn->len));
+    if (clientConn->sockFD < 0)
     {
-        perror("[Accept(TCP_serverSocket* server, TCP_clientSocket* client )] - ");
+        perror("[Accept(TCPServerConn*, TCPClientConn*)] - ");
         exit(EXIT_FAILURE);
     }
     else
@@ -81,48 +119,152 @@ void Accept(TCP_serverSocket *server, TCP_clientSocket *client)
         printf("Server accepted connection...\n");
     }
 }
-
-void *threadRecv(void *argv)
+void processPacket(Packet *packet, int sockFD)
 {
-    while(1)
+    switch (packet->packetType)
     {
-        Packet *packet = (Packet*)malloc(sizeof(Packet));
-        if(packet == NULL)
+    case SENDSYNC:
+        callFunction(packet);
+        int sendBytes = write(sockFD, packet, sizeof(*packet));
+        if (sendBytes < 0)
         {
-            perror("malloc:\n");
+            perror("[processPacket(Packet*)] - ");
             exit(EXIT_FAILURE);
         }
-        Clear(packet);
-
-        //se citesc datele transmise de client prin socket 
-
-        int connfd = *(int *)argv;
-        //pthread_mutex_lock(&recv_mutex);
-        int readBytes = read(connfd, packet, sizeof(*packet));
-        //pthread_mutex_unlock(&recv_mutex);
-
-        packet->extractionOffset = ntohl(packet->extractionOffset);
-        packet->currentSize = ntohl(packet->currentSize);
-
-        if (readBytes < 0)
+        closeClientConnection(sockFD);
+        free(packet);
+        break;
+        
+    case SENDASYNC:
+        Packet *sendPacket = (Packet *)malloc(sizeof(Packet));
+        int id = callAsyncFunction(sendPacket);
+        sendPacket->packetType = ACK;
+        sendBytes = send(sockFD, sendPacket, sizeof(Packet), 0);
+        if (sendBytes < 0)
         {
-            perror("[threadRecv(void *argv)] - ");
+            perror("[processPacket(Packet*)] - ");
             exit(EXIT_FAILURE);
         }
 
-        processPacket(packet, connfd);
+        closeClientConnection(sockFD);
+        free(sendPacket);
+        
+        pthread_mutex_lock(&requestsQueue_mutex);
+        printf("pachet primit: %d\n", packet->currentSize);
+        pushQueue(&requestsQueue, packet, id, &requestQueue_size);
+        printf("%d req queue size\n", requestQueue_size);
+        pthread_mutex_unlock(&requestsQueue_mutex);
+
+        break;
+    case REQUEST:
+        uint32_t extractedID;
+        ExtractInt(packet, &extractedID);
+        printf("%d id extr\n", extractedID);
+        pthread_mutex_lock(&processedQueue_mutex);
+        Packet *extractedPacket = extractPacketById(&processedQueue, extractedID, &processedQueue_size);
+        pthread_mutex_unlock(&processedQueue_mutex);
+
+        if (extractedPacket != NULL)
+        {
+            printf("am extras pachetul\n");
+            fflush(stdout);
+            extractedPacket->packetType = ACK;
+            int sendBytes = write(sockFD, extractedPacket, sizeof(Packet));
+            if (sendBytes < 0)
+            {
+                perror("[processPacket(Packet*)] - ");
+                exit(EXIT_FAILURE);
+            }
+        }
+        else
+        {
+            fflush(stdout);
+            printf("nu exista pachet");
+        }
+
+        break;
+    default:
+        break;
     }
-    pthread_exit(NULL);
-    
 }
-
-void createThreadRecv(TCP_clientSocket *client)
+void *threadRecv(void* argv)
 {
+    Packet* packet = (Packet*)malloc(sizeof(Packet));
+    Clear(packet);
+    int sockFD = *(int *)argv;
+    int readBytes = read(sockFD, packet, sizeof(Packet));
+    packet->extractionOffset = ntohl(packet->extractionOffset);
+    packet->currentSize = ntohl(packet->currentSize);
     
+    if (readBytes < 0)
+    {
+        perror("[threadRecv(void*)] - ");
+        exit(EXIT_FAILURE);
+    }
+    processPacket(packet, sockFD);
+    
+    return NULL;
+}
+void createThreadRecv(TCPClientConn* clientConn)
+{
     pthread_t id;
     int *sockFDPtr = malloc(sizeof(int));
-    *sockFDPtr = client->connfd;
-
+    *sockFDPtr = clientConn->sockFD;
     pthread_create(&id, NULL, threadRecv, (void *)sockFDPtr);
-    pthread_detach(id); 
+}
+void chatWithClients(TCPServerConn* serverConn)
+{
+    createSocket(serverConn);
+    initSocket(serverConn);
+    Bind(serverConn);
+    Listen(serverConn);
+    while (1)
+    {
+        TCPClientConn *clientConn = (TCPClientConn *)malloc(sizeof(TCPClientConn));
+        Accept(serverConn, clientConn);
+        createThreadRecv(clientConn);
+    }
+}
+
+void *threadProcessPacket(void *arg)
+{
+    Node * queueNode = (Node*)arg;
+    if (queueNode != NULL)
+    {
+        callFunction(queueNode->packet);
+        pthread_mutex_lock(&processedQueue_mutex);
+        pushQueue(&processedQueue, queueNode->packet, queueNode->id, &processedQueue_size);
+        pthread_mutex_unlock(&processedQueue_mutex);
+        printf("pachet procesat\n");
+    }
+    else
+    {
+        printf("pachet neprocesat\n");
+    }
+
+    pthread_mutex_lock(&mutex);
+    activeThreads--;
+    pthread_mutex_unlock(&mutex);
+    return NULL;
+}
+
+void* manageRequestsQueue(void* arg){
+    requestsQueue.firstNode=NULL;
+    processedQueue.firstNode=NULL;
+    while (1)
+    {
+        pthread_mutex_lock(&mutex);
+        pthread_mutex_lock(&requestsQueue_mutex);
+        if (requestQueue_size > 0 && activeThreads < WORKING_THREADS)
+        {
+            Node *extractedNode = popQueue(&requestsQueue, &requestQueue_size);
+            pthread_t id;
+            pthread_create(&id, NULL, threadProcessPacket, extractedNode);
+            activeThreads++;
+            printf("if\n");
+        }
+        pthread_mutex_unlock(&requestsQueue_mutex);
+        pthread_mutex_unlock(&mutex);
+    }
+    return NULL;
 }

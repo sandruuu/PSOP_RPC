@@ -1,24 +1,73 @@
 #include "packet.h"
 
-void Clear(Packet* packet){
+void Clear(Packet *packet)
+{
     memset(packet->buffer, 0, MaxPacketSize);
     packet->extractionOffset = 0;
     packet->currentSize = 0;
-    //packet->packetType = UNKNOWN;
+    packet->packetType = UNKNOWN;
 }
 
-void Append(Packet* packet, const void* data, uint32_t size){
-    if ((packet->currentSize + size +1) > MaxPacketSize) {
-        printf("[Append(Packet* packet, const void* data, uint32_t size)] - Packet size exceeded max packet size.\n");
+void Append(Packet *packet, const void *data, uint32_t size)
+{
+    if ((packet->currentSize + size + 1) > MaxPacketSize)
+    {
+        printf("[Append(Packet*, const void*, uint32_t)] - Packet size exceeded max packet size.\n");
         exit(EXIT_FAILURE);
     }
-    memcpy(packet->buffer + packet->currentSize, (char*)data, size);
+    memcpy(packet->buffer + packet->currentSize, (char *)data, size);
     packet->currentSize += size;
 }
 
-void AppendInt(Packet* packet, uint32_t data){
+void AppendInt(Packet *packet, uint32_t data)
+{
     uint32_t convertedData = htonl(data);
     Append(packet, &convertedData, sizeof(uint32_t));
+}
+
+void AppendString(Packet *packet, char *data, uint32_t size)
+{
+    AppendInt(packet, size);
+    Append(packet, data, size);
+}
+
+void ExtractInt(Packet *packet, uint32_t *data)
+{
+    if ((packet->extractionOffset + sizeof(uint32_t)) > packet->currentSize)
+    {
+        printf("[ExtractInt(Packet*, uint32_t*)] - Extraction offset exceeded buffer size.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    memcpy(data, packet->buffer + packet->extractionOffset, sizeof(uint32_t));
+    *data = ntohl(*data);
+
+    packet->extractionOffset += sizeof(uint32_t);
+}
+
+void ExtractString(Packet *packet, char **data)
+{
+    uint32_t stringSize = 0;
+    ExtractInt(packet, &stringSize);
+
+    if ((packet->extractionOffset + stringSize) > packet->currentSize)
+    {
+        printf("[ExtractString(Packet*, char**)] - Extraction offset exceeded buffer size.\n");
+        exit(EXIT_FAILURE);
+    }
+
+    *data = (char *)malloc(stringSize + 1);
+
+    if (*data == NULL)
+    {
+        perror("[ExtractString(Packet*, char**)] - ");
+        exit(EXIT_FAILURE);
+    }
+
+    memcpy(*data, packet->buffer + packet->extractionOffset, stringSize);
+    (*data)[stringSize] = '\0';
+
+    packet->extractionOffset += stringSize;
 }
 
 void AppendFloat(Packet *packet, float data)
@@ -29,123 +78,65 @@ void AppendFloat(Packet *packet, float data)
     Append(packet, &convertedData, sizeof(uint32_t));
 }
 
-void AppendArray(Packet *packet, void *data, uint32_t size, DataType dataType)
-{
-     switch(dataType){
-        
-        case TYPE_INT:
-            AppendInt(packet,size);
-            for(int i = 0; i < size ; i++)
-                AppendInt(packet,(uint32_t)(((uint32_t*)(data))[i]));
-            break;
-        
-        case TYPE_FLOAT:
-            AppendInt(packet,size);
-            for(int i = 0; i < size ; i++)
-                AppendFloat(packet,(float)(((float*)(data))[i]));
-            break;
-         default:
-            printf("Unknown dataType\n");
-            break;
-
-    }
-}
-
-void AppendString(Packet* packet, char* data, uint32_t size){
-    AppendInt(packet, size);
-    Append(packet, data, size);
-}
-
-void ExtractInt(Packet* packet, uint32_t* data){
-    if ((packet->extractionOffset + sizeof(uint32_t)) > packet->currentSize) {
-        printf("[ExtractInt(Packet* packet, uint32_t* data)] - Extraction offset exceeded buffer size.\n");
-        exit(EXIT_FAILURE);
-    }
-
-    memcpy(data, packet->buffer + packet->extractionOffset, sizeof(uint32_t));
-    *data = ntohl(*data);
-
-    packet->extractionOffset += sizeof(uint32_t);
-}
-
 void ExtractFloat(Packet *packet, float *data)
 {
-    if ((packet->extractionOffset + sizeof(uint32_t)) > packet->currentSize) {
-        printf("[ExtractFloat(Packet* packet, float* data)] - Extraction offset exceeded buffer size.\n");
+    if ((packet->extractionOffset + sizeof(uint32_t)) > packet->currentSize)
+    {
+        printf("[ExtractFloat(Packet*, float*)] - Extraction offset exceeded buffer size.\n");
         exit(EXIT_FAILURE);
     }
-
     uint32_t temp;
     memcpy(&temp, packet->buffer + packet->extractionOffset, sizeof(uint32_t));
     temp = ntohl(temp);
     memcpy(data, &temp, sizeof(float));
-
     packet->extractionOffset += sizeof(uint32_t);
 }
 
-void ExtractArray(Packet *packet, void **data, uint32_t *size, DataType dataType)
+void AppendIntArray(Packet *packet, int *data, uint32_t size)
 {
-     switch(dataType){
-        
-        case TYPE_INT:
-        ExtractInt(packet,size);
-            (*((uint32_t**)data)) = (uint32_t*)malloc(sizeof(uint32_t)* (*size));
-            
-            if(*data == NULL)
-            {
-                perror("malloc - ");
-                exit(EXIT_FAILURE);
-            }
-            
-            for(int i = 0; i < *size ; i++)
-                {
-                    uint32_t buffer;
-                    ExtractInt(packet,&buffer);
-                    (*((uint32_t**)data))[i] = buffer;
-                }
-        
-            break;
-        
-        case TYPE_FLOAT:
+    AppendInt(packet, size);
+    for (int i = 0; i < size; i++)
+        AppendInt(packet, (uint32_t)(((uint32_t *)(data))[i]));
+}
 
-            ExtractInt(packet,size);
-            
-            (*((float**)data)) = (float*)malloc(sizeof(float)* (*size));
-            if(*data == NULL)
-            {
-                perror("malloc - ");
-                exit(EXIT_FAILURE);
-            }
-            for(int i = 0; i < *size ; i++)
-                {
-                    float buffer;
-                    ExtractFloat(packet,&buffer);
-                    (*((float**)data))[i] = buffer;
-                }
-            break;
-         default:
-            printf("Unknown dataType\n");
-            break;
+void ExtractIntArray(Packet *packet, void **data, uint32_t *size)
+{
+    ExtractInt(packet, size);
+    (*((uint32_t **)data)) = (uint32_t *)malloc(sizeof(uint32_t) * (*size));
+    if (*data == NULL)
+    {
+        perror("ExtractIntArray(Packet*, void**, uint32_t*) - ");
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < *size; i++)
+    {
+        uint32_t aux;
+        ExtractInt(packet, &aux);
+        (*((uint32_t **)data))[i] = aux;
     }
 }
-void ExtractString(Packet* packet, char** data){
-    uint32_t stringSize = 0;
-    ExtractInt(packet, &stringSize);
-    
-    if ((packet->extractionOffset + stringSize) > packet->currentSize) {
-        printf("[ExtractString(Packet* packet, char** data)] - Extraction offset exceeded buffer size.\n");
+
+void AppendFloatArray(Packet *packet, float *data, uint32_t size)
+{
+    AppendInt(packet, size);
+    for (int i = 0; i < size; i++)
+        AppendFloat(packet, (uint32_t)(((uint32_t *)(data))[i]));
+}
+
+void ExtractFloatArray(Packet *packet, void **data, uint32_t *size)
+{
+    ExtractInt(packet, size);
+    (*((float **)data)) = (float *)malloc(sizeof(float) * (*size));
+    if (*data == NULL)
+    {
+        perror("ExtractFloatArray(Packet*, void**, uint32_t*) - ");
         exit(EXIT_FAILURE);
     }
-
-    *data = (char*)malloc(stringSize + 1);
-
-    if (*data == NULL) {
-        perror("[ExtractString(Packet* packet, char** data)] - ");
-        exit(EXIT_FAILURE);
+    for (int i = 0; i < *size; i++)
+    {
+        float aux;
+        ExtractFloat(packet, &aux);
+        (*((float **)data))[i] = aux;
     }
-
-    memcpy(*data, packet->buffer + packet->extractionOffset, stringSize);
-    (*data)[stringSize] = '\0';
-
-    packet->extractionOffset += stringSize;
 }

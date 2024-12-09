@@ -9,11 +9,14 @@ int main(){
     connection->endpoint = (IPEndpoint*)malloc(sizeof(IPEndpoint));
     connection->endpoint->IPAddress = strdup("127.0.0.1");
     connection->endpoint->Port = PORT;
-    connection->recvPacket = (Packet*)malloc(sizeof(Packet));
+    connection->recvPacket =  (Packet*)malloc(sizeof(Packet));
     
-    int sum = add(connection, 10, 20);
+    int id = addAsync(connection, 10, 29);
+    printf("Id-ul functiei este: %d\n", id);
+    
+    int sum = addREQUEST(connection, id);
     printf("Suma numerelor este: %d\n", sum);
-    
+
     free(connection->endpoint->IPAddress);
     free(connection->endpoint);
     free(connection->recvPacket);

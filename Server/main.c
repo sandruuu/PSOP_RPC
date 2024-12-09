@@ -1,23 +1,11 @@
-#ifndef _GNU_BIB_LIBRARIES
-#define _GNU_BIB_LIBRARIES 
-#include "epollConnection.h"
-#endif
+#include "connectToClient.h"
 
-int main(int argc, char* argv){
-
-    struct TCP_serverSocket server;
-    create_thread();
-    create_cleanup();
-
-    struct sigaction sa;
-    sa.sa_handler = SIG_IGN; 
-    sigemptyset(&sa.sa_mask);
-    memset(&sa, 0, sizeof(sa));
-    sigaction(SIGWINCH, &sa, NULL);
-
-    
-    epollComunication(&server);
-    pthread_barrier_destroy(&cleanup_barrier);
-    closeServerConnection(server.sockfd);
+int main(int argc, char** argv){
+    struct TCPServerConn server;
+    pthread_t id;
+    pthread_create(&id, NULL, manageRequestsQueue, NULL);
+    chatWithClients(&server);
+    closeServerConnection(server.sockFD);
+    pthread_join(id,NULL);
     return 0;
 }
