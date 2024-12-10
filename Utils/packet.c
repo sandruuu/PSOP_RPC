@@ -70,6 +70,31 @@ void ExtractString(Packet *packet, char **data)
     packet->extractionOffset += stringSize;
 }
 
+void ExtractIntArray(Packet *packet, int **data, uint32_t *size)
+{
+    ExtractInt(packet, size);
+    (*((uint32_t **)data)) = (uint32_t *)malloc(sizeof(uint32_t) * (*size));
+    if (*data == NULL)
+    {
+        perror("ExtractIntArray(Packet*, void**, uint32_t*) - ");
+        exit(EXIT_FAILURE);
+    }
+
+    for (int i = 0; i < *size; i++)
+    {
+        uint32_t aux;
+        ExtractInt(packet, &aux);
+        (*((uint32_t **)data))[i] = aux;
+    }
+}
+
+void AppendIntArray(Packet *packet, int *data, uint32_t size)
+{
+    AppendInt(packet, size);
+    for (int i = 0; i < size; i++)
+        AppendInt(packet, (uint32_t)(((uint32_t *)(data))[i]));
+}
+
 void AppendFloat(Packet *packet, float data)
 {
     uint32_t convertedData;
@@ -92,42 +117,19 @@ void ExtractFloat(Packet *packet, float *data)
     packet->extractionOffset += sizeof(uint32_t);
 }
 
-void AppendIntArray(Packet *packet, int *data, uint32_t size)
-{
-    AppendInt(packet, size);
-    for (int i = 0; i < size; i++)
-        AppendInt(packet, (uint32_t)(((uint32_t *)(data))[i]));
-}
-
-void ExtractIntArray(Packet *packet, void **data, uint32_t *size)
-{
-    ExtractInt(packet, size);
-    (*((uint32_t **)data)) = (uint32_t *)malloc(sizeof(uint32_t) * (*size));
-    if (*data == NULL)
-    {
-        perror("ExtractIntArray(Packet*, void**, uint32_t*) - ");
-        exit(EXIT_FAILURE);
-    }
-
-    for (int i = 0; i < *size; i++)
-    {
-        uint32_t aux;
-        ExtractInt(packet, &aux);
-        (*((uint32_t **)data))[i] = aux;
-    }
-}
-
 void AppendFloatArray(Packet *packet, float *data, uint32_t size)
 {
     AppendInt(packet, size);
     for (int i = 0; i < size; i++)
-        AppendFloat(packet, (uint32_t)(((uint32_t *)(data))[i]));
+    {
+        AppendFloat(packet, data[i]);
+    }
 }
 
-void ExtractFloatArray(Packet *packet, void **data, uint32_t *size)
+void ExtractFloatArray(Packet *packet, float **data, uint32_t *size)
 {
     ExtractInt(packet, size);
-    (*((float **)data)) = (float *)malloc(sizeof(float) * (*size));
+    (*data) = (float *)malloc(sizeof(float) * (*size));
     if (*data == NULL)
     {
         perror("ExtractFloatArray(Packet*, void**, uint32_t*) - ");
@@ -137,6 +139,6 @@ void ExtractFloatArray(Packet *packet, void **data, uint32_t *size)
     {
         float aux;
         ExtractFloat(packet, &aux);
-        (*((float **)data))[i] = aux;
+        (*data)[i] = aux;
     }
 }

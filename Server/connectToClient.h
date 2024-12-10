@@ -1,6 +1,6 @@
 #include "functions.h"
 #include "../Utils/packet.h"
-#include "Queue.h"
+#include "queue.h"
 
 #define WORKING_THREADS 10
 

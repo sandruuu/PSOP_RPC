@@ -12,8 +12,8 @@
 
 typedef enum
 {
-    SENDSYNC,
-    SENDASYNC,
+    SYNC,
+    ASYNC,
     REQUEST,
     ACK,
     NREADY,
@@ -39,8 +39,8 @@ void AppendFloatArray(Packet *packet, float *data, uint32_t size);
 void ExtractInt(Packet *packet, uint32_t *data);
 void ExtractFloat(Packet *packet, float *data);
 void ExtractString(Packet *packet, char **data);
-void ExtractIntArray(Packet *packet, void **data, uint32_t *size);
-void ExtractFloatArray(Packet *packet, void **data, uint32_t *size);
+void ExtractIntArray(Packet *packet, int **data, uint32_t *size);
+void ExtractFloatArray(Packet *packet, float **data, uint32_t *size);
 
 void Clear(Packet *packet);
 

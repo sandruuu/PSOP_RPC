@@ -17,7 +17,6 @@ int generateID()
     id++;
     return id;
 }
-
 int callAsyncFunction(Packet *packet)
 {
     int id = generateID();
@@ -35,23 +34,103 @@ void callSumFunction(Packet *packet)
     ExtractInt(packet, &value_2);
 
     int returnVal = add((int)value_1, (int)value_2);
-    printf("%d\n", returnVal);
     Clear(packet);
     AppendInt(packet, returnVal);
+}
+void callRemoveDuplicatesFunction(Packet *packet)
+{
+    char *buffer = NULL;
+    uint32_t size;
+    ExtractString(packet, &buffer);
+    ExtractInt(packet, &size);
+    removeDuplicates(buffer, (int *)&size);
+    Clear(packet);
+
+    AppendString(packet, buffer, size);
+
+    free(buffer);
+}
+void callLongestAscendingDigitNumber(Packet *packet)
+{
+    int *arr = NULL;
+    uint32_t size;
+    ExtractIntArray(packet, &arr, &size);
+    int data = longestAscendingDigitNumber(arr, (int)size);
+    Clear(packet);
+
+    AppendInt(packet, data);
+
+    free(arr);
+}
+void callCalculateWordFrequency(Packet *packet)
+{
+    char *buffer = NULL;
+    ExtractString(packet, &buffer);
+    char *word = NULL;
+    ExtractString(packet, &word);
+    Clear(packet);
+
+    int data = calculateWordFrequency(buffer, word);
+    AppendInt(packet, data);
+
+    free(buffer);
+    free(word);
+}
+void callRotateArray(Packet *packet)
+{
+    float *arr = NULL;
+    uint32_t size;
+    ExtractFloatArray(packet, &arr, &size);
+    uint32_t positions;
+    ExtractInt(packet, &positions);
+    char *direction = NULL;
+    ExtractString(packet, &direction);
+
+    rotateArray(arr, (int)size, positions, direction);
+
+    Clear(packet);
+
+    AppendFloatArray(packet, arr, size);
+
+    free(arr);
+    free(direction);
 }
 
 void callFunction(Packet *packet)
 {
-    char *data;
+    char *data = NULL;
     ExtractString(packet, &data);
+
     if (strcmp(data, "add") == 0)
     {
         callSumFunction(packet);
     }
+
+    if (strcmp(data, "removeDuplicates") == 0)
+    {
+        callRemoveDuplicatesFunction(packet);
+    }
+
+    if (strcmp(data, "longestAscendingDigitNumber") == 0)
+    {
+        callLongestAscendingDigitNumber(packet);
+    }
+
+    if (strcmp(data, "calculateWordFrequency") == 0)
+    {
+        callCalculateWordFrequency(packet);
+    }
+
+    if (strcmp(data, "rotateArray") == 0)
+    {
+        callRotateArray(packet);
+    }
+
+    free(data);
     packet->packetType = ACK;
 }
 
-void createSocket(TCPServerConn* serverConn)
+void createSocket(TCPServerConn *serverConn)
 {
     serverConn->sockFD = socket(AF_INET, SOCK_STREAM, 0);
     if (serverConn->sockFD == -1)
@@ -65,13 +144,13 @@ void createSocket(TCPServerConn* serverConn)
         bzero(&serverConn->serveraddr, sizeof(serverConn->serveraddr));
     }
 }
-void initSocket(TCPServerConn* serverConn)
+void initSocket(TCPServerConn *serverConn)
 {
     serverConn->serveraddr.sin_family = AF_INET;
     serverConn->serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
     serverConn->serveraddr.sin_port = htons(PORT);
 }
-void Bind(TCPServerConn* serverConn)
+void Bind(TCPServerConn *serverConn)
 {
     if (bind(serverConn->sockFD, (struct sockaddr *)&serverConn->serveraddr,
              sizeof(serverConn->serveraddr)) != 0)
@@ -92,7 +171,7 @@ void closeServerConnection(int sockFD)
 {
     close(sockFD);
 }
-void Listen(TCPServerConn* serverConn)
+void Listen(TCPServerConn *serverConn)
 {
     if (listen(serverConn->sockFD, 5) != 0)
     {
@@ -104,11 +183,11 @@ void Listen(TCPServerConn* serverConn)
         printf("Server listening...\n");
     }
 }
-void Accept(TCPServerConn* serverConn, TCPClientConn* clientConn)
+void Accept(TCPServerConn *serverConn, TCPClientConn *clientConn)
 {
     clientConn->len = sizeof(clientConn->clientaddr);
     clientConn->sockFD = accept(serverConn->sockFD,
-                            (struct sockaddr *)&clientConn->clientaddr, &(clientConn->len));
+                                (struct sockaddr *)&clientConn->clientaddr, &(clientConn->len));
     if (clientConn->sockFD < 0)
     {
         perror("[Accept(TCPServerConn*, TCPClientConn*)] - ");
@@ -123,9 +202,9 @@ void processPacket(Packet *packet, int sockFD)
 {
     switch (packet->packetType)
     {
-    case SENDSYNC:
+    case SYNC:
         callFunction(packet);
-        int sendBytes = write(sockFD, packet, sizeof(*packet));
+        int sendBytes = send(sockFD, packet, sizeof(*packet), 0);
         if (sendBytes < 0)
         {
             perror("[processPacket(Packet*)] - ");
@@ -134,8 +213,8 @@ void processPacket(Packet *packet, int sockFD)
         closeClientConnection(sockFD);
         free(packet);
         break;
-        
-    case SENDASYNC:
+
+    case ASYNC:
         Packet *sendPacket = (Packet *)malloc(sizeof(Packet));
         int id = callAsyncFunction(sendPacket);
         sendPacket->packetType = ACK;
@@ -148,7 +227,7 @@ void processPacket(Packet *packet, int sockFD)
 
         closeClientConnection(sockFD);
         free(sendPacket);
-        
+
         pthread_mutex_lock(&requestsQueue_mutex);
         printf("pachet primit: %d\n", packet->currentSize);
         pushQueue(&requestsQueue, packet, id, &requestQueue_size);
@@ -187,32 +266,33 @@ void processPacket(Packet *packet, int sockFD)
         break;
     }
 }
-void *threadRecv(void* argv)
+
+void *threadRecv(void *argv)
 {
-    Packet* packet = (Packet*)malloc(sizeof(Packet));
+    Packet *packet = (Packet *)malloc(sizeof(Packet));
     Clear(packet);
     int sockFD = *(int *)argv;
     int readBytes = read(sockFD, packet, sizeof(Packet));
     packet->extractionOffset = ntohl(packet->extractionOffset);
     packet->currentSize = ntohl(packet->currentSize);
-    
+
     if (readBytes < 0)
     {
         perror("[threadRecv(void*)] - ");
         exit(EXIT_FAILURE);
     }
     processPacket(packet, sockFD);
-    
+
     return NULL;
 }
-void createThreadRecv(TCPClientConn* clientConn)
+void createThreadRecv(TCPClientConn *clientConn)
 {
     pthread_t id;
     int *sockFDPtr = malloc(sizeof(int));
     *sockFDPtr = clientConn->sockFD;
     pthread_create(&id, NULL, threadRecv, (void *)sockFDPtr);
 }
-void chatWithClients(TCPServerConn* serverConn)
+void chatWithClients(TCPServerConn *serverConn)
 {
     createSocket(serverConn);
     initSocket(serverConn);
@@ -228,7 +308,7 @@ void chatWithClients(TCPServerConn* serverConn)
 
 void *threadProcessPacket(void *arg)
 {
-    Node * queueNode = (Node*)arg;
+    Node *queueNode = (Node *)arg;
     if (queueNode != NULL)
     {
         callFunction(queueNode->packet);
@@ -247,10 +327,10 @@ void *threadProcessPacket(void *arg)
     pthread_mutex_unlock(&mutex);
     return NULL;
 }
-
-void* manageRequestsQueue(void* arg){
-    requestsQueue.firstNode=NULL;
-    processedQueue.firstNode=NULL;
+void *manageRequestsQueue(void *arg)
+{
+    requestsQueue.firstNode = NULL;
+    processedQueue.firstNode = NULL;
     while (1)
     {
         pthread_mutex_lock(&mutex);
