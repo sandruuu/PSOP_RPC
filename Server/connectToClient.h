@@ -1,20 +1,16 @@
-#include "functions.h"
 #include "../Utils/packet.h"
+#include "../Utils/log.h"
+#include "functions.h"
 #include "queue.h"
+#include <sys/time.h>
 
 #define WORKING_THREADS 10
 
-typedef struct TCPClientConn {
-    struct sockaddr_in clientaddr;   
-    socklen_t len;   
+typedef struct TCPConnection {
+    struct sockaddr_in addr; 
     int sockFD;
-}TCPClientConn;
+}TCPConnection;
 
-typedef struct TCPServerConn {
-    struct sockaddr_in serveraddr; 
-    int sockFD;
-}TCPServerConn;
-
-void chatWithClients(TCPServerConn* serverConn);
+void chatWithClients(TCPConnection* serverConn);
 void closeServerConnection(int sockFD);
 void* manageRequestsQueue(void* arg);

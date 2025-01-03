@@ -7,6 +7,7 @@
 #include <string.h>
 #include <arpa/inet.h>
 #include <errno.h>
+#include <stdbool.h>
 
 #define MaxPacketSize 8192
 

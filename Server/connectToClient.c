@@ -13,10 +13,22 @@ pthread_mutex_t processedQueue_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int generateID()
 {
-    static int id = 0;
-    id++;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+
+    srand((unsigned int)(tv.tv_sec + tv.tv_usec));
+    
+    int length = (rand() % 2) + 5;
+    int id = 0;
+
+    for (int i = 0; i < length; i++)
+    {
+        id = id * 10 + (rand() % 10);
+    }
+
     return id;
 }
+
 int callAsyncFunction(Packet *packet)
 {
     int id = generateID();
@@ -130,37 +142,37 @@ void callFunction(Packet *packet)
     packet->packetType = ACK;
 }
 
-void createSocket(TCPServerConn *serverConn)
+void createSocket(TCPConnection *serverConn)
 {
     serverConn->sockFD = socket(AF_INET, SOCK_STREAM, 0);
     if (serverConn->sockFD == -1)
     {
-        perror("[createSocket(TCPServerConn*)] - ");
+        log_error("[ createSocket(TCPServerConn*) ] - Socket failed to create.");
         exit(EXIT_FAILURE);
     }
     else
     {
-        printf("Socket successfully created..\n");
-        bzero(&serverConn->serveraddr, sizeof(serverConn->serveraddr));
+        log_info("Socket successfully created..");
+        bzero(&serverConn->addr, sizeof(serverConn->addr));
     }
 }
-void initSocket(TCPServerConn *serverConn)
+void initSocket(TCPConnection *serverConn)
 {
-    serverConn->serveraddr.sin_family = AF_INET;
-    serverConn->serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
-    serverConn->serveraddr.sin_port = htons(PORT);
+    serverConn->addr.sin_family = AF_INET;
+    serverConn->addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    serverConn->addr.sin_port = htons(PORT);
 }
-void Bind(TCPServerConn *serverConn)
+void Bind(TCPConnection *serverConn)
 {
-    if (bind(serverConn->sockFD, (struct sockaddr *)&serverConn->serveraddr,
-             sizeof(serverConn->serveraddr)) != 0)
+    if (bind(serverConn->sockFD, (struct sockaddr *)&serverConn->addr,
+             sizeof(serverConn->addr)) != 0)
     {
-        perror("[Bind(TCPServerConn*)] - ");
+        log_error("[ Bind(TCPServerConn*) ] - Socket failed to bind.");
         exit(EXIT_FAILURE);
     }
     else
     {
-        printf("Socket successfully binded..\n");
+        log_info("Socket successfully binded..");
     }
 }
 void closeClientConnection(int sockFD)
@@ -171,31 +183,31 @@ void closeServerConnection(int sockFD)
 {
     close(sockFD);
 }
-void Listen(TCPServerConn *serverConn)
+void Listen(TCPConnection *serverConn)
 {
     if (listen(serverConn->sockFD, 5) != 0)
     {
-        perror("[Listen(TCPServerConn*)] - ");
+        log_error("[ Listen(TCPServerConn*) ] - Server failed to listen");
         exit(EXIT_FAILURE);
     }
     else
     {
-        printf("Server listening...\n");
+        log_info("Server listening...");
     }
 }
-void Accept(TCPServerConn *serverConn, TCPClientConn *clientConn)
+void Accept(TCPConnection *serverConn, TCPConnection *clientConn)
 {
-    clientConn->len = sizeof(clientConn->clientaddr);
+    socklen_t len = sizeof(clientConn->addr);
     clientConn->sockFD = accept(serverConn->sockFD,
-                                (struct sockaddr *)&clientConn->clientaddr, &(clientConn->len));
+                                (struct sockaddr *)&clientConn->addr, &len);
     if (clientConn->sockFD < 0)
     {
-        perror("[Accept(TCPServerConn*, TCPClientConn*)] - ");
+        log_error("[ Accept(TCPServerConn*, TCPClientConn*) ] - Server failed to accept connection.");
         exit(EXIT_FAILURE);
     }
     else
     {
-        printf("Server accepted connection...\n");
+        log_info("Server accepted connection...");
     }
 }
 void processPacket(Packet *packet, int sockFD)
@@ -203,62 +215,67 @@ void processPacket(Packet *packet, int sockFD)
     switch (packet->packetType)
     {
     case SYNC:
+        log_info("Server received sync mode packet.");
         callFunction(packet);
         int sendBytes = send(sockFD, packet, sizeof(*packet), 0);
         if (sendBytes < 0)
         {
-            perror("[processPacket(Packet*)] - ");
+            log_error("[ processPacket(Packet*) ] - Server failed to send packet.");
             exit(EXIT_FAILURE);
+        } else {
+            log_info("Server sent packet.");
         }
         closeClientConnection(sockFD);
         free(packet);
         break;
 
     case ASYNC:
+        log_info("Server received async mode packet.");
         Packet *sendPacket = (Packet *)malloc(sizeof(Packet));
         int id = callAsyncFunction(sendPacket);
         sendPacket->packetType = ACK;
         sendBytes = send(sockFD, sendPacket, sizeof(Packet), 0);
         if (sendBytes < 0)
         {
-            perror("[processPacket(Packet*)] - ");
+            log_error("[ processPacket(Packet*) ] - Server failed to send ACK packet containing id %d.", id);
             exit(EXIT_FAILURE);
+        } else {
+            log_info("Server sent an ACK packet containing ID %d.", id);
         }
 
         closeClientConnection(sockFD);
         free(sendPacket);
 
         pthread_mutex_lock(&requestsQueue_mutex);
-        printf("pachet primit: %d\n", packet->currentSize);
         pushQueue(&requestsQueue, packet, id, &requestQueue_size);
-        printf("%d req queue size\n", requestQueue_size);
+        log_info("Packet with id %d added to requests queue.", id);
         pthread_mutex_unlock(&requestsQueue_mutex);
 
         break;
     case REQUEST:
         uint32_t extractedID;
         ExtractInt(packet, &extractedID);
-        printf("%d id extr\n", extractedID);
+        log_info("Server received request packet with id %d.", (int)extractedID);
         pthread_mutex_lock(&processedQueue_mutex);
         Packet *extractedPacket = extractPacketById(&processedQueue, extractedID, &processedQueue_size);
         pthread_mutex_unlock(&processedQueue_mutex);
 
         if (extractedPacket != NULL)
         {
-            printf("am extras pachetul\n");
-            fflush(stdout);
+            log_info("Packet with id %d extracted from processed queue.", (int)extractedID);
             extractedPacket->packetType = ACK;
             int sendBytes = write(sockFD, extractedPacket, sizeof(Packet));
             if (sendBytes < 0)
             {
-                perror("[processPacket(Packet*)] - ");
+                log_error("[ processPacket(Packet*) ] - Server failed to send packet with id %d.", (int)extractedID);
                 exit(EXIT_FAILURE);
+            } else {
+                log_info("Server sent packet with id %d.", (int)extractedID);
             }
         }
         else
         {
-            fflush(stdout);
-            printf("nu exista pachet");
+            log_info("Packet with id %d not found in processed queue.", (int)extractedID);
         }
 
         break;
@@ -278,21 +295,21 @@ void *threadRecv(void *argv)
 
     if (readBytes < 0)
     {
-        perror("[threadRecv(void*)] - ");
+        log_error("[ threadRecv(void*) ] - Server failed to receive incoming packet.");
         exit(EXIT_FAILURE);
     }
     processPacket(packet, sockFD);
 
     return NULL;
 }
-void createThreadRecv(TCPClientConn *clientConn)
+void createThreadRecv(TCPConnection *clientConn)
 {
     pthread_t id;
     int *sockFDPtr = malloc(sizeof(int));
     *sockFDPtr = clientConn->sockFD;
     pthread_create(&id, NULL, threadRecv, (void *)sockFDPtr);
 }
-void chatWithClients(TCPServerConn *serverConn)
+void chatWithClients(TCPConnection *serverConn)
 {
     createSocket(serverConn);
     initSocket(serverConn);
@@ -300,7 +317,7 @@ void chatWithClients(TCPServerConn *serverConn)
     Listen(serverConn);
     while (1)
     {
-        TCPClientConn *clientConn = (TCPClientConn *)malloc(sizeof(TCPClientConn));
+        TCPConnection *clientConn = (TCPConnection *)malloc(sizeof(TCPConnection));
         Accept(serverConn, clientConn);
         createThreadRecv(clientConn);
     }
@@ -313,13 +330,9 @@ void *threadProcessPacket(void *arg)
     {
         callFunction(queueNode->packet);
         pthread_mutex_lock(&processedQueue_mutex);
+        log_info("Packet with id %d added in processed queue.", queueNode->id);
         pushQueue(&processedQueue, queueNode->packet, queueNode->id, &processedQueue_size);
         pthread_mutex_unlock(&processedQueue_mutex);
-        printf("pachet procesat\n");
-    }
-    else
-    {
-        printf("pachet neprocesat\n");
     }
 
     pthread_mutex_lock(&mutex);
@@ -327,6 +340,7 @@ void *threadProcessPacket(void *arg)
     pthread_mutex_unlock(&mutex);
     return NULL;
 }
+
 void *manageRequestsQueue(void *arg)
 {
     requestsQueue.firstNode = NULL;
@@ -338,10 +352,10 @@ void *manageRequestsQueue(void *arg)
         if (requestQueue_size > 0 && activeThreads < WORKING_THREADS)
         {
             Node *extractedNode = popQueue(&requestsQueue, &requestQueue_size);
+            log_info("Packet extracted from requests queue.");
             pthread_t id;
             pthread_create(&id, NULL, threadProcessPacket, extractedNode);
             activeThreads++;
-            printf("if\n");
         }
         pthread_mutex_unlock(&requestsQueue_mutex);
         pthread_mutex_unlock(&mutex);
