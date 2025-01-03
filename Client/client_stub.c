@@ -89,7 +89,7 @@ int addAsync(TCPConnection *connection, int a, int b)
 
     return callAsyncFunction(connection, sendPacket);
 }
-int addREQUEST(TCPConnection *connection, int id)
+int addRequest(TCPConnection *connection, int id)
 {
     Packet *sendPacket = (Packet *)malloc(sizeof(Packet));
     Clear(sendPacket);
@@ -154,7 +154,7 @@ int removeDuplicatesAsync(TCPConnection *connection, char *buffer, int size)
 
     return callAsyncFunction(connection, sendPacket);
 }
-char *removeDuplicatesREQUEST(TCPConnection *connection, int id)
+char *removeDuplicatesRequest(TCPConnection *connection, int id)
 {
     Packet *sendPacket = (Packet *)malloc(sizeof(Packet));
     Clear(sendPacket);
@@ -187,6 +187,32 @@ int longestAscendingDigitNumber(TCPConnection *connection, int *arr, int size)
     free(sendPacket);
     return value;
 }
+int longestAscendingDigitNumberAsync(TCPConnection *connection, int *arr, int size)
+{
+    Packet *sendPacket = (Packet *)malloc(sizeof(Packet));
+    Clear(sendPacket);
+    sendPacket->packetType = ASYNC;
+    AppendString(sendPacket, "longestAscendingDigitNumber", strlen("longestAscendingDigitNumber"));
+    AppendIntArray(sendPacket, arr, size);
+    sendPacket->extractionOffset = htonl(sendPacket->extractionOffset);
+    sendPacket->currentSize = htonl(sendPacket->currentSize);
+
+    return callAsyncFunction(connection, sendPacket);
+}
+int longestAscendingDigitNumberRequest(TCPConnection *connection, int id)
+{
+    Packet *sendPacket = (Packet *)malloc(sizeof(Packet));
+    Clear(sendPacket);
+    sendPacket->packetType = REQUEST;
+    AppendInt(sendPacket, id);
+    callFunction(connection, sendPacket);
+
+    uint32_t value = 0;
+    ExtractInt(connection->recvPacket, &value);
+
+    free(sendPacket);
+    return value;
+}
 
 int calculateWordFrequency(TCPConnection *connection, char *buffer, int bufferSize, char *word, int wordSize)
 {
@@ -205,21 +231,69 @@ int calculateWordFrequency(TCPConnection *connection, char *buffer, int bufferSi
     free(sendPacket);
     return value;
 }
+int calculateWordFrequencyAsync(TCPConnection *connection, char *buffer, int bufferSize, char *word, int wordSize)
+{
+    Packet *sendPacket = (Packet *)malloc(sizeof(Packet));
+    Clear(sendPacket);
+    sendPacket->packetType = ASYNC;
+    AppendString(sendPacket, "calculateWordFrequency", strlen("calculateWordFrequency"));
+    AppendString(sendPacket, buffer, bufferSize);
+    AppendString(sendPacket, word, wordSize);
 
-float *rotateArray(TCPConnection *connection, float *arr, int size, int rotations, char *direction, int directionSize)
+    return callAsyncFunction(connection, sendPacket);
+}
+int calculateWordFrequencyRequest(TCPConnection *connection, int id)
+{
+    Packet *sendPacket = (Packet *)malloc(sizeof(Packet));
+    Clear(sendPacket);
+    sendPacket->packetType = REQUEST;
+    AppendInt(sendPacket, id);
+    callFunction(connection, sendPacket);
+
+    uint32_t value = 0;
+    ExtractInt(connection->recvPacket, &value);
+
+    free(sendPacket);
+    return value;
+}
+
+float* rotateArray(TCPConnection *connection, float *arr, int size, int rotations, char *direction, int directionSize)
 {
     Packet *sendPacket = (Packet *)malloc(sizeof(Packet));
     Clear(sendPacket);
     sendPacket->packetType = SYNC;
     AppendString(sendPacket, "rotateArray", strlen("rotateArray"));
-    for (int i = 0; i < 6; i++)
-    {
-        printf("%.2f ", arr[i]);
-    }
     AppendFloatArray(sendPacket, arr, size);
     AppendInt(sendPacket, rotations);
     AppendString(sendPacket, direction, directionSize);
 
+    callFunction(connection, sendPacket);
+
+    float *data = NULL;
+    uint32_t dataSize;
+    ExtractFloatArray(connection->recvPacket, &data, &dataSize);
+
+    free(sendPacket);
+    return data;
+}
+int rotateArrayAsync(TCPConnection *connection, float *arr, int size, int rotations, char *direction, int directionSize)
+{
+    Packet *sendPacket = (Packet *)malloc(sizeof(Packet));
+    Clear(sendPacket);
+    sendPacket->packetType = ASYNC;
+    AppendString(sendPacket, "rotateArray", strlen("rotateArray"));
+    AppendFloatArray(sendPacket, arr, size);
+    AppendInt(sendPacket, rotations);
+    AppendString(sendPacket, direction, directionSize);
+
+    return callAsyncFunction(connection, sendPacket);
+}
+float* rotateArrayRequest(TCPConnection *connection, int id)
+{
+    Packet *sendPacket = (Packet *)malloc(sizeof(Packet));
+    Clear(sendPacket);
+    sendPacket->packetType = REQUEST;
+    AppendInt(sendPacket, id);
     callFunction(connection, sendPacket);
 
     float *data = NULL;

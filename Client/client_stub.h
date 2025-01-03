@@ -27,13 +27,21 @@ typedef struct TCPConnection {
 
 int add(TCPConnection* connection, int a, int b);
 int addAsync(TCPConnection* connection, int a, int b);
-int addREQUEST(TCPConnection* connection, int packetID);
+int addRequest(TCPConnection* connection, int packetID);
 
 char* removeDuplicates(TCPConnection* connection, char* buffer, int size);
 int removeDuplicatesAsync(TCPConnection *connection, char *buffer, int size);
-char* removeDuplicatesREQUEST(TCPConnection *connection, int id);
+char* removeDuplicatesRequest(TCPConnection *connection, int id);
 
 int longestAscendingDigitNumber(TCPConnection *connection, int *arr, int size);
+int longestAscendingDigitNumberAsync(TCPConnection *connection, int *arr, int size);
+int longestAscendingDigitNumberRequest(TCPConnection *connection, int id);
+
 int calculateWordFrequency(TCPConnection *connection, char *buffer, int bufferSize, char *word, int wordSize);
+int calculateWordFrequencyAsync(TCPConnection *connection, char *buffer, int bufferSize, char *word, int wordSize);
+int calculateWordFrequencyRequest(TCPConnection *connection, int id);
+
 float* rotateArray(TCPConnection *connection, float* arr, int size, int rotations, char* direction, int directionSize);
+int rotateArrayAsync(TCPConnection *connection, float *arr, int size, int rotations, char *direction, int directionSize);
+float* rotateArrayRequest(TCPConnection *connection, int id);
 #endif
