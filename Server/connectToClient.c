@@ -272,12 +272,46 @@ void processPacket(Packet *packet, int sockFD)
             } else {
                 log_info("Server sent packet with id %d.", (int)extractedID);
             }
-        }
-        else
-        {
+        } else {
             log_info("Packet with id %d not found in processed queue.", (int)extractedID);
-        }
+            
+            bool prioritized = false;
+            
+            pthread_mutex_lock(&mutex);
+            pthread_mutex_lock(&requestsQueue_mutex);
+            if(requestQueue_size > 0){
+                extractedPacket = extractPacketById(&requestsQueue, extractedID, &requestQueue_size);
+                prioritized = true;
+            }  
+            pthread_mutex_unlock(&requestsQueue_mutex);
+            pthread_mutex_unlock(&mutex);
 
+            if(prioritized == true){
+                callFunction(extractedPacket);
+            }
+
+            if(prioritized == false){
+                while(extractedPacket == NULL){
+                    pthread_mutex_lock(&processedQueue_mutex);
+                    extractedPacket = extractPacketById(&processedQueue, extractedID, &processedQueue_size);
+                    pthread_mutex_unlock(&processedQueue_mutex);
+                }
+            }
+
+            if(extractedPacket!=NULL){
+                log_info("Packet with id %d extracted from processed queue.", (int)extractedID);
+                extractedPacket->packetType = ACK;
+                int sendBytes = write(sockFD, extractedPacket, sizeof(Packet));
+                if (sendBytes < 0)
+                {
+                    log_error("[ processPacket(Packet*) ] - Server failed to send packet with id %d.", (int)extractedID);
+                    exit(EXIT_FAILURE);
+                } else {
+                    log_info("Server sent packet with id %d.", (int)extractedID);
+                }
+            }            
+            
+        }
         break;
     default:
         break;
@@ -352,7 +386,7 @@ void *manageRequestsQueue(void *arg)
         if (requestQueue_size > 0 && activeThreads < WORKING_THREADS)
         {
             Node *extractedNode = popQueue(&requestsQueue, &requestQueue_size);
-            log_info("Packet extracted from requests queue.");
+            log_info("Packet with id %d extracted from requests queue.", extractedNode->id);
             pthread_t id;
             pthread_create(&id, NULL, threadProcessPacket, extractedNode);
             activeThreads++;

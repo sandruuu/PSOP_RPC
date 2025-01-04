@@ -15,7 +15,6 @@ void pushQueue(Queue* queue, Packet* packet, int id, int* size){
         queue->firstNode = newNode;  
     }
     (*size)++;
-    printf("inserted queue packet with id: %d\n", id);
 }
 
 
