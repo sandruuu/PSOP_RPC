@@ -1,0 +1,138 @@
+2025-01-04 15:01:23 INFO  connectToClient.c:155: Socket successfully created..
+2025-01-04 15:01:23 INFO  connectToClient.c:175: Socket successfully binded..
+2025-01-04 15:01:23 INFO  connectToClient.c:195: Server listening...
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:233: Server received async mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:243: Server sent an ACK packet containing ID 559.
+2025-01-04 15:01:28 INFO  connectToClient.c:251: Packet with id 559 added to requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:233: Server received async mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:389: Packet with id 559 extracted from requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:233: Server received async mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:243: Server sent an ACK packet containing ID 127293.
+2025-01-04 15:01:28 INFO  connectToClient.c:233: Server received async mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:233: Server received async mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:251: Packet with id 127293 added to requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:243: Server sent an ACK packet containing ID 83598.
+2025-01-04 15:01:28 INFO  connectToClient.c:243: Server sent an ACK packet containing ID 814469.
+2025-01-04 15:01:28 INFO  connectToClient.c:251: Packet with id 83598 added to requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:251: Packet with id 814469 added to requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:233: Server received async mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:243: Server sent an ACK packet containing ID 576678.
+2025-01-04 15:01:28 INFO  connectToClient.c:233: Server received async mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:243: Server sent an ACK packet containing ID 987241.
+2025-01-04 15:01:28 INFO  connectToClient.c:367: Packet with id 559 added in processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:233: Server received async mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:251: Packet with id 576678 added to requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:258: Server received request packet with id 559.
+2025-01-04 15:01:28 INFO  connectToClient.c:258: Server received request packet with id 127293.
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:243: Server sent an ACK packet containing ID 523708.
+2025-01-04 15:01:28 INFO  connectToClient.c:243: Server sent an ACK packet containing ID 52880.
+2025-01-04 15:01:28 INFO  connectToClient.c:389: Packet with id 576678 extracted from requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:218: Server received sync mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:226: Server sent packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:276: Packet with id 127293 not found in processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:258: Server received request packet with id 987241.
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:233: Server received async mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:258: Server received request packet with id 52880.
+2025-01-04 15:01:28 INFO  connectToClient.c:218: Server received sync mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:226: Server sent packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:258: Server received request packet with id 523708.
+2025-01-04 15:01:28 INFO  connectToClient.c:258: Server received request packet with id 576678.
+2025-01-04 15:01:28 INFO  connectToClient.c:218: Server received sync mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:367: Packet with id 576678 added in processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:226: Server sent packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:389: Packet with id 814469 extracted from requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:265: Packet with id 559 extracted from processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:273: Server sent packet with id 559.
+2025-01-04 15:01:28 INFO  connectToClient.c:218: Server received sync mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:389: Packet with id 83598 extracted from requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:276: Packet with id 987241 not found in processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:276: Packet with id 52880 not found in processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:276: Packet with id 523708 not found in processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:265: Packet with id 576678 extracted from processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:258: Server received request packet with id 165370.
+2025-01-04 15:01:28 INFO  connectToClient.c:367: Packet with id 814469 added in processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:273: Server sent packet with id 576678.
+2025-01-04 15:01:28 INFO  connectToClient.c:226: Server sent packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:243: Server sent an ACK packet containing ID 165370.
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:218: Server received sync mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:367: Packet with id 83598 added in processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:389: Packet with id 127293 extracted from requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:276: Packet with id 165370 not found in processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:226: Server sent packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:367: Packet with id 127293 added in processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:218: Server received sync mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:28 INFO  connectToClient.c:218: Server received sync mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:302: Packet with id 127293 extracted from processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:310: Server sent packet with id 127293.
+2025-01-04 15:01:28 INFO  connectToClient.c:226: Server sent packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:218: Server received sync mode packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:226: Server sent packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:226: Server sent packet.
+2025-01-04 15:01:28 INFO  connectToClient.c:251: Packet with id 987241 added to requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:251: Packet with id 52880 added to requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:251: Packet with id 165370 added to requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:389: Packet with id 165370 extracted from requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:389: Packet with id 52880 extracted from requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:389: Packet with id 987241 extracted from requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:367: Packet with id 165370 added in processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:251: Packet with id 523708 added to requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:389: Packet with id 523708 extracted from requests queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:367: Packet with id 987241 added in processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:367: Packet with id 52880 added in processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:367: Packet with id 523708 added in processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:302: Packet with id 165370 extracted from processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:302: Packet with id 987241 extracted from processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:302: Packet with id 523708 extracted from processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:302: Packet with id 52880 extracted from processed queue.
+2025-01-04 15:01:28 INFO  connectToClient.c:310: Server sent packet with id 165370.
+2025-01-04 15:01:28 INFO  connectToClient.c:310: Server sent packet with id 523708.
+2025-01-04 15:01:28 INFO  connectToClient.c:310: Server sent packet with id 52880.
+2025-01-04 15:01:28 INFO  connectToClient.c:310: Server sent packet with id 987241.
+2025-01-04 15:01:29 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:29 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:29 INFO  connectToClient.c:258: Server received request packet with id 814469.
+2025-01-04 15:01:29 INFO  connectToClient.c:265: Packet with id 814469 extracted from processed queue.
+2025-01-04 15:01:29 INFO  connectToClient.c:273: Server sent packet with id 814469.
+2025-01-04 15:01:29 INFO  connectToClient.c:258: Server received request packet with id 83598.
+2025-01-04 15:01:29 INFO  connectToClient.c:265: Packet with id 83598 extracted from processed queue.
+2025-01-04 15:01:29 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:29 INFO  connectToClient.c:273: Server sent packet with id 83598.
+2025-01-04 15:01:29 INFO  connectToClient.c:233: Server received async mode packet.
+2025-01-04 15:01:29 INFO  connectToClient.c:243: Server sent an ACK packet containing ID 4957.
+2025-01-04 15:01:29 INFO  connectToClient.c:251: Packet with id 4957 added to requests queue.
+2025-01-04 15:01:29 INFO  connectToClient.c:389: Packet with id 4957 extracted from requests queue.
+2025-01-04 15:01:29 INFO  connectToClient.c:367: Packet with id 4957 added in processed queue.
+2025-01-04 15:01:29 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:29 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:29 INFO  connectToClient.c:218: Server received sync mode packet.
+2025-01-04 15:01:29 INFO  connectToClient.c:226: Server sent packet.
+2025-01-04 15:01:29 INFO  connectToClient.c:258: Server received request packet with id 4957.
+2025-01-04 15:01:29 INFO  connectToClient.c:265: Packet with id 4957 extracted from processed queue.
+2025-01-04 15:01:29 INFO  connectToClient.c:273: Server sent packet with id 4957.
+2025-01-04 15:01:29 INFO  connectToClient.c:210: Server accepted connection...
+2025-01-04 15:01:29 INFO  connectToClient.c:218: Server received sync mode packet.
+2025-01-04 15:01:29 INFO  connectToClient.c:226: Server sent packet.

@@ -8,6 +8,19 @@ export LD_LIBRARY_PATH=../Client:$LD_LIBRARY_PATH
 ./client4_async &
 ./client5_async &
 
+./client1_async &
+./client2_async &
+./client3_async &
+./client4_async &
+./client5_async &
+
+
+./client1_sync &
+./client2_sync &
+./client3_sync &
+./client4_sync &
+./client5_sync &
+
 ./client1_sync &
 ./client2_sync &
 ./client3_sync &
@@ -16,4 +29,4 @@ export LD_LIBRARY_PATH=../Client:$LD_LIBRARY_PATH
 
 wait
 
-echo "Toți clienții au terminat execuția!"
+echo "\nClients ended execution."
