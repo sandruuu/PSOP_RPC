@@ -29,4 +29,4 @@ export LD_LIBRARY_PATH=../Client:$LD_LIBRARY_PATH
 
 wait
 
-echo "\nClients ended execution."
+echo "Clients ended execution."
